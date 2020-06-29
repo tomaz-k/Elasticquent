@@ -253,7 +253,7 @@ trait ElasticquentTrait
      *
      * Using this method, a custom query can be sent to Elasticsearch.
      *
-     * @param  $params parameters to be passed directly to Elasticsearch
+     * @param  $params array parameters to be passed directly to Elasticsearch
      * @return ElasticquentResultCollection
      */
     public static function complexSearch($params)
@@ -280,7 +280,7 @@ trait ElasticquentTrait
 
         $params = $instance->getBasicEsParams();
 
-        $params['body']['query']['match']['_all'] = $term;
+        $params['body']['query']['query_string']['query'] = $term;
 
         $result = $instance->getElasticSearchClient()->search($params);
 
@@ -359,8 +359,6 @@ trait ElasticquentTrait
      * type passed in a parameter array.
      *
      * @param bool $getIdIfPossible
-     * @param bool $getSourceIfPossible
-     * @param bool $getTimestampIfPossible
      * @param int  $limit
      * @param int  $offset
      *
@@ -370,7 +368,6 @@ trait ElasticquentTrait
     {
         $params = array(
             'index' => $this->getIndexName(),
-            'type' => $this->getTypeName(),
         );
 
         if ($getIdIfPossible && $this->getKey()) {
@@ -427,7 +424,7 @@ trait ElasticquentTrait
     /**
      * Get Mapping
      *
-     * @return void
+     * @return array
      */
     public static function getMapping()
     {
@@ -531,8 +528,7 @@ trait ElasticquentTrait
 
         $mappingProperties = $instance->getMappingProperties();
         if (!is_null($mappingProperties)) {
-            $index['body']['mappings'][$instance->getTypeName()] = [
-                '_source' => array('enabled' => true),
+            $index['body']['mappings'] = [
                 'properties' => $mappingProperties,
             ];
         }
@@ -586,14 +582,14 @@ trait ElasticquentTrait
     public function newFromHitBuilder($hit = array())
     {
         $key_name = $this->getKeyName();
-        
+
         $attributes = $hit['_source'];
 
         if (isset($hit['_id'])) {
             $idAsInteger = intval($hit['_id']);
             $attributes[$key_name] = $idAsInteger ? $idAsInteger : $hit['_id'];
         }
-        
+
         // Add fields to attributes
         if (isset($hit['fields'])) {
             foreach ($hit['fields'] as $key => $value) {
@@ -686,7 +682,7 @@ trait ElasticquentTrait
         $items = array_map(function ($item) use ($instance, $parentRelation) {
             // Convert all null relations into empty arrays
             $item = $item ?: [];
-            
+
             return static::newFromBuilderRecursive($instance, $item, $parentRelation);
         }, $items);
 
