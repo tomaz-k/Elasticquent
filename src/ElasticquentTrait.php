@@ -53,6 +53,13 @@ trait ElasticquentTrait
      */
     protected $documentVersion = null;
 
+
+    /**
+     * Populated if we provided a highlight param when searching
+     *
+     * @var null|array
+     */
+    protected $documentHighlights = null;
     /**
      * New Collection
      *
@@ -131,6 +138,9 @@ trait ElasticquentTrait
         return $this->indexSettings;
     }
 
+    public function getHighlights() {
+        return $this->documentHighlights;
+    }
     /**
      * Is Elasticsearch Document
      *
@@ -586,7 +596,7 @@ trait ElasticquentTrait
         $attributes = $hit['_source'];
 
         if (isset($hit['_id'])) {
-            $idAsInteger = intval($hit['_id']);
+            $idAsInteger = ($hit['_id']);
             $attributes[$key_name] = $idAsInteger ? $idAsInteger : $hit['_id'];
         }
 
@@ -606,6 +616,10 @@ trait ElasticquentTrait
         // This is now a model created
         // from an Elasticsearch document.
         $instance->isDocument = true;
+
+        if (isset($hit['highlight'])) {
+            $instance->documentHighlights = $hit['highlight'];
+        }
 
         // Set our document version if it's
         if (isset($hit['_version'])) {
